@@ -1,82 +1,111 @@
-const axios = require('axios');
-const{utiles}=global;
-async function fetchFromAI(url, params) {
- try {
- const response = await axios.get(url, { params });
- return response.data;
- } catch (error) {
- console.error(error);
- return null;
- }
-}
-
-async function getAIResponse(input, userId, messageID) {
- const services = [
- { url: 'https://ai-tools.replit.app/gpt', params: { prompt: input, uid: userId } },
- { url: 'https://openaikey-x20f.onrender.com/api', params: { prompt: input } },
- { url: 'http://fi1.bot-hosting.net:6518/gpt', params: { query: input } },
- { url: 'https://ai-chat-gpt-4-lite.onrender.com/api/hercai', params: { question: input } }
- ];
-
- let response = "qu'est-ce qu'il y a encore....pose ta question 🉑✍️";
- let currentIndex = 0;
-
- for (let i = 0; i < services.length; i++) {
- const service = services[currentIndex];
- const data = await fetchFromAI(service.url, service.params);
- if (data && (data.gpt4 || data.reply || data.response)) {
- response = data.gpt4 || data.reply || data.response;
- break;
- }
- currentIndex = (currentIndex + 1) % services.length; // Move to the next service in the cycle
- }
-
- return { response, messageID };
-}
+const fs = require("fs-extra");
+const { utils } = global;
 
 module.exports = {
- config: {
- name: 'jokers',
- author: 'Arn',
- role: 0,
- category: 'jokers',
- shortDescription: 'ai to ask anything',
- },
- onStart: async function ({ api, event, arns }) {
- const input = args.join(' ').trim();
- if (!input) {
- api.sendMessage(``, event.threadID, event.messageID);
- return;
- }
+	config: {
+		name: "prefix",
+		version: "1.4",
+		author: "NTKhang",
+		countDown: 5,
+		role: 0,
+		description: "Thay đổi dấu lệnh của bot trong box chat của bạn hoặc cả hệ thống bot (chỉ admin bot)",
+		category: "config",
+		guide: {
+			vi: "   {pn} <new prefix>: thay đổi prefix mới trong box chat của bạn"
+				+ "\dụ:"
+				+ "\n} #"
+				+ "\n} <new prefix> -g: thay đổi prefix mới trong hệ thống bot (chỉ admin bot)"
+				+ "\dụ:"
+				+ "\n} # -g"
+				+ "\n} reset: thay đổi prefix trong box chat của bạn về mặc định",
+			en: "   {pn} <new prefix>: change new prefix in your box chat"
+				+ "\mple:"
+				+ "\n} #"
+				+ "\n} <new prefix> -g: change new prefix in system bot (only admin bot)"
+				+ "\mple:"
+				+ "\n} # -g"
+				+ "\n} reset: change prefix in your box chat to default"
+		}
+	},
 
-const fonts = {
+	langs: {
+		vi: {
+			reset: "Đã reset prefix của bạn về mặc định: %1",
+			onlyAdmin: "Chỉ admin mới có thể thay đổi prefix hệ thống bot",
+			confirmGlobal: "Vui lòng thả cảm xúc bất kỳ vào tin nhắn này để xác nhận thay đổi prefix của toàn bộ hệ thống bot",
+			confirmThisThread: "Vui lòng thả cảm xúc bất kỳ vào tin nhắn này để xác nhận thay đổi prefix trong nhóm chat của bạn",
+			successGlobal: "Đã thay đổi prefix hệ thống bot thành: %1",
+			successThisThread: "Đã thay đổi prefix trong nhóm chat của bạn thành: %1",
+			myPrefix: "🌐 Prefix của hệ thống: %1\fix của nhóm bạn: %2"
+		},
+		en: {
+			reset: "Your prefix has been reset to default: %1",
+			onlyAdmin: "Only admin can change prefix of system bot",
+			confirmGlobal: "Please react to this message to confirm change prefix of system bot",
+			confirmThisThread: "Please react to this message to confirm change prefix in your box chat",
+			successGlobal: "Changed prefix of system bot to: %1",
+			successThisThread: "Changed prefix in your box chat to: %1",
+			myPrefix: "🉑𝙋𝙍𝙀𝙁𝙄𝙓🉑⚘Ïmpøstër⊰♔⊱ 🎭 #\n━━━━━━━━━━━━━━━━\n⚘Ïmpøstër⊰♔⊱ 🎭𝙎𝙔𝙎𝙋𝙀𝙈🤹:⚜️#2⚜️\n━━━━━━━━━━━━━━━━\n🙇....𝑀𝑌 𝐶𝑅𝐸𝐴𝑇𝑂𝑅....🙇\n━━━━━━━━━━━━━━━━\n🔰___jean_noël___🔰\n━━━━━━━━━━━━━━━━\n🤹 𝗧𝗮𝗽𝗲 #1𝗵𝗲𝗹𝗽 𝗽𝗼𝘂𝗿 𝗮𝘃𝗼𝗶𝗿 𝗹𝗮 𝗹𝗶𝘀𝘁𝗲 𝗱𝗲 𝗰𝗼𝗺𝗺𝗮𝗻𝗱𝘀 🤹"
+		}
+	},
 
- mathsans: {
+	onStart: async function ({ message, role, args, commandName, event, threadsData, getLang }) {
+		if (!args[0])
+			return message.SyntaxError();
 
- 𝗮: "𝗮", 𝗯: "𝗯", 𝗰: "𝗰", 𝗱: "𝗱", 𝗲: "𝗲", f: "𝗳", 𝗴: "𝗴", 𝗵: "𝗵", 𝗶: "𝗶",
+		if (args[0] == 'reset') {
+			await threadsData.set(event.threadID, null, "data.prefix");
+			return message.reply(getLang("reset", global.GoatBot.config.prefix));
+		}
+  const helpListImages = [
+        "https://i.ibb.co/HgN9N8H/image.jpg",
+        "https://i.ibb.co/BVqHC54/image.jpg",
+        "https://i.ibb.co/54hpf9s/image.jpg",
+        "https://i.ibb.co/8xjnwfk/image.jpg",
+        // Add more image links as needed
+      ];
 
- 𝗝: "𝗷", 𝗸: "𝗸", 𝗹: "𝗹", 𝗺: "𝗺", 𝘀: "𝗻", 𝘀: "𝗼", 𝘀: "𝗽", q: "𝗾", r: "𝗿",
+      const helpListImage = helpListImages[Math.floor(Math.random() * helpListImages.length)];
+		const newPrefix = args[0];
+		const formSet = {
+			commandName,
+			author: event.senderID,
+			newPrefix
+		};
 
- 𝘀: "𝘀", 𝘁: "𝘁", 𝘂: "𝘂", 𝘃: "𝘃", 𝘄: "𝘄", 𝘅: "𝘅", 𝘆: "𝘆", 𝘇: "𝘇",
+		if (args[1] === "-g")
+			if (role < 2)
+				return message.reply(getLang("onlyAdmin"));
+			else
+				formSet.setGlobal = true;
+		else
+			formSet.setGlobal = false;
 
- 𝗔: "𝗔", 𝗕: "𝗕", 𝗖: "𝗖", 𝗗: "𝗗", 𝗘: "𝗘", 𝗙: "𝗙", 𝗚: "𝗚", 𝗛: "𝗛", 𝗜: "𝗜",
+		return message.reply(args[1] === "-g" ? getLang("confirmGlobal") : getLang("confirmThisThread"), (err, info) => {
+			formSet.messageID = info.messageID;
+			global.GoatBot.onReaction.set(info.messageID, formSet);
+		});
+	},
 
- 𝗝: "𝗝", 𝗞: "𝗞", 𝗟: "𝗟", 𝗠: "𝗠", 𝗡: "𝗡", 𝗢: "𝗢", 𝗣: "𝗣", 𝗤: "𝗦", 𝗥: "𝗥",
+	onReaction: async function ({ message, threadsData, event, Reaction, getLang }) {
+		const { author, newPrefix, setGlobal } = Reaction;
+		if (event.userID !== author)
+			return;
+		if (setGlobal) {
+			global.GoatBot.config.prefix = newPrefix;
+			fs.writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
+			return message.reply(getLang("successGlobal", newPrefix));
+		}
+		else {
+			await threadsData.set(event.threadID, newPrefix, "data.prefix");
+			return message.reply(getLang("successThisThread", newPrefix));
+		}
+	},
 
- 𝗦: "𝗦", 𝗧: "𝗧", 𝗨: "𝗨", 𝗩: "𝗩", 𝗪: "𝗪", 𝗫: "𝗫", 𝗬: "𝗬", 𝗭: "𝗭",
- }
+	onChat: async function ({ event, message, getLang }) {
+		if (event.body && event.body.toLowerCase() === "prefix")
+			return () => {
+				return message.reply(getLang("myPrefix", global.GoatBot.config.prefix, utils.getPrefix(event.threadID)));
+			};
+	}
 };
-
- 
- const { response, messageID } = await getAIResponse(input, event.senderID, event.messageID);
- api.sendMessage(` ${response} `, event.threadID, messageID);
- },
- onChat: async function ({ event, message }) {
- const messageContent = event.body.trim().toLowerCase();
- if (messageContent.startsWith("ai")) {
- const input = messageContent.replace(/^ai\s*/, "").trim();
- const { response, messageID } = await getAIResponse(input, event.senderID, message.messageID);
- message.reply(`🂱❍☬⚘Ïmpøstër⊰♔⊱ 🎭☬❍🂱\n🂱${response}__✍︎\n❍☬⚘Ïmpøstër⊰♔⊱ 🎭☬❍`, messageID);
- }
- }
- }
