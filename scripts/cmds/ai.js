@@ -36,11 +36,11 @@ async function getAIResponse(input, userId, messageID) {
 
 module.exports = {
  config: {
- name: 'jokers',
+ name: 'ai',
  author: 'Arn',
  role: 0,
- category: 'jokers',
- shortDescription: 'ai to ask anything',
+ category: 'ai',
+ shortDescription: 'Ai',
  },
  onStart: async function ({ api, event, arns }) {
  const input = args.join(' ').trim();
@@ -79,4 +79,4 @@ const fonts = {
  message.reply(`🂱❍☬⚘Ïmpøstër⊰♔⊱ 🎭☬❍🂱\n🂱${response}__✍︎\n❍☬⚘Ïmpøstër⊰♔⊱ 🎭☬❍`, messageID);
  }
  }
-                                        }
+ }
