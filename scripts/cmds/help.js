@@ -113,7 +113,9 @@ module.exports = {
           else if (value.config.shortDescription)
             shortDescription = checkLangObject(value.config.shortDescription, langCode);
           if (shortDescription)
-            describe += `:\n🎭_${cropContent(shortDescription.charAt(0).toUpperCase() + shortDescription.slice(1))}🎭_`;
+            describe += `:\n⚠️___${cropContent(shortDescription.charAt(0).toUpperCase() + shortDescription.slice(1))}...
+______________________________
+`;
           arrayInfo.push({
             data: describe,
             priority: value.priority || 0
@@ -279,4 +281,4 @@ function cropContent(content, max) {
     content = content + "...";
   }
   return content;
-}
+  }
